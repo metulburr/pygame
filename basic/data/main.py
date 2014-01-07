@@ -1,8 +1,7 @@
 
 
-from .control import Control
+from . import control
 
 def main():
-    fullscreen = True
-    app = Control(fullscreen)
+    app = control.Control(fullscreen=False)
     app.run()
