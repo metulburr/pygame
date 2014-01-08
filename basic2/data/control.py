@@ -2,7 +2,7 @@
 
 import pygame as pg
 import os
-from .states import menu, game
+from .states import menu, game, splash
 
 class Control():
     def __init__(self, fullscreen):
@@ -22,9 +22,10 @@ class Control():
         self.done = False
         self.state_dict = {
             'MENU'      : menu.Menu(self.screen_rect),
-            'GAME'      : game.Game(self.screen_rect)
+            'GAME'      : game.Game(self.screen_rect),
+            'SPLASH'    : splash.Splash(self.screen_rect)
         }
-        self.state_name = "MENU"
+        self.state_name = "SPLASH"
         self.state = self.state_dict[self.state_name]
 
     def event_loop(self):
