@@ -1,24 +1,32 @@
 
-
 import pygame as pg
 import os
+import weakref
         
-class Button:
+class Entry:
+    instances = []
     def __init__(self, text='', width=100, height=10, fontsize=15, font=None, 
-        fg=(0,0,0), bg=(255,255,255), hover=(155,155,155), command=None, border=False):
+        fg=(0,0,0), deselect=(255,255,255), select=(155,155,155), bg=(255,255,255), border_width=5, border=False):
+        
+        Entry.instances.append(self)
         self.font = font
         self.text_color = fg
         self.label, self.label_rect = self.render_font(text, self.font, fontsize)
-        self.bg_color = bg
+        self.bg_color = deselect
+        self.background_color = bg
         self.color = self.bg_color
-        self.hover_bg_color = hover
-        self.callback = command
+        self.hover_bg_color = select
+        self.border_width = border_width
         self.border = border
         self.image = pg.Surface([width,height]).convert()
         self.image.fill(self.bg_color)
+        self.background = pg.Surface([width-self.border_width,height-self.border_width]).convert()
+        self.background.fill(self.background_color)
+        self.background_rect = self.background.get_rect()
         self.rect = self.image.get_rect()
         self.label_rect.center = self.rect.center
-        self.is_hover = False
+        self.background_rect.center = self.rect.center
+        self.focus = False
         
     def render_font(self, text, filename, size):
         if not filename:
@@ -31,30 +39,30 @@ class Button:
         
     def render(self, screen):
         pg.draw.rect(screen, self.color, self.rect, self.border)
+        pg.draw.rect(screen, self.background_color, self.background_rect, False)
         screen.blit(self.label, self.label_rect)
         
     def mouse_collision(self):
-        if self.rect.collidepoint(pg.mouse.get_pos()):
-            self.is_hover = True
-        else:
-            self.is_hover = False
-            
-        if self.is_hover:
+        if self.focus:
             self.color = self.hover_bg_color
         else:
             self.color = self.bg_color
             
     def update(self):
         self.label_rect.center = self.rect.center
+        self.background_rect.center = self.rect.center
         self.mouse_collision()
             
     def get_event(self, event):
-        if self.is_hover:
+        if self.rect.collidepoint(pg.mouse.get_pos()):
             if event.type == pg.MOUSEBUTTONDOWN and event.button == 1:
-                self.callback()
+                for obj in Entry.instances[:]: #reset all other Entry focus to False
+                    obj.focus = False
+                self.focus = not self.focus
+            
 
 if __name__ == "__main__":
-        
+    
     class Font:
         '''simulating tools'''
         path = 'resources/fonts'
@@ -62,12 +70,6 @@ if __name__ == "__main__":
         def load(filename, size):
             p = os.path.join(Font.path, filename+'.ttf')
             return pg.font.Font(os.path.abspath(p), size)
-
-    def callback():
-        print('running callback')
-        
-    def callback2():
-        print('running callback 2')
         
     class Control:
         def __init__(self):
@@ -77,30 +79,31 @@ if __name__ == "__main__":
             self.Clock = pg.time.Clock()
             self.done = False
             
-            self.btn = Button(text='Button1', width=100, height=20, font='impact',
-                fg=(0,0,0), bg=(155,155,155), hover=(255,255,255), command=callback)
-            self.btn.rect.center = (200,100)
-            self.btn2 = Button(text='Button2', width=100, height=20, font='impact',
-                fg=(0,0,0), bg=(155,155,155), hover=(255,255,255), command=callback2)
-            self.btn2.rect.center = (200,150)
-            self.quit_btn = Button(text='Quit', width=100, height=20, font='impact',
-                fg=(255,0,0), bg=(155,155,155), hover=(255,255,255), command=self.terminate)
-            self.quit_btn.rect.center = (200,200)
-            self.buttons = [self.btn, self.btn2, self.quit_btn]
+            self.e = Entry(text='default text 1', width=300, height=30, fontsize=20,
+                fg=(0,0,0), deselect=(255,255,255), select=(0,0,0))
+            self.e.rect.center = (200,100)
+            self.e2 = Entry(text='default text 2', width=300, height=30, fontsize=20,
+                fg=(0,0,0), deselect=(255,255,255), select=(0,0,0))
+            self.e2.rect.center = (200,150)
+            self.e3 = Entry(text='default text 3', width=300, height=30, fontsize=20,
+                fg=(0,0,0), deselect=(255,255,255), select=(0,0,0))
+            self.e3.rect.center = (200,200)
+
+            self.entries = [self.e, self.e2, self.e3]
             
         def event_loop(self):
             keys = pg.key.get_pressed()
             for event in pg.event.get():
                 if event.type == pg.QUIT or keys[pg.K_ESCAPE]:
                     self.done = True
-                for b in self.buttons:
+                for b in self.entries:
                     b.get_event(event)
                         
         def run(self):
             while not self.done:
-                self.screen.fill(0)
+                self.screen.fill((155,155,155))
                 self.event_loop()
-                for b in self.buttons:
+                for b in self.entries:
                     b.update()
                     b.render(self.screen)
                 pg.display.update()
@@ -113,4 +116,3 @@ if __name__ == "__main__":
     app = Control()
     app.run()
     pg.quit()
-
