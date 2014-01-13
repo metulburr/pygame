@@ -54,14 +54,16 @@ class Entry:
             self.border_color = self.border_color_init
         else:
             self.border_color = self.bg_color
+
+        if self.label_rect.width > self.rect.width:
+            self.label_rect.right= self.rect.right
+            #self.label_rect.width = self.rect.width
+            #self.label_rect.clip(self.rect)
+            #self.label_rect.fit(self.rect)
+            
         
         
     def get_event(self, event):
-        if self.rect.collidepoint(pg.mouse.get_pos()):
-            if event.type == pg.MOUSEBUTTONDOWN and event.button == 1:
-                for obj in Entry.instances: 
-                    obj.focus = False
-                self.focus = not self.focus
         if event.type == pg.KEYDOWN:
             if self.focus:
                 if event.unicode.isprintable():
@@ -71,6 +73,12 @@ class Entry:
                 elif event.key == pg.K_DELETE:
                     self.text = ''
                 self.label, self.label_rect = self.render_font(self.text, self.font, self.fontsize)
+        elif self.rect.collidepoint(pg.mouse.get_pos()):
+            if event.type == pg.MOUSEBUTTONDOWN and event.button == 1:
+                for obj in Entry.instances: 
+                    obj.focus = False
+                self.focus = not self.focus
+
             
 
 if __name__ == "__main__":
