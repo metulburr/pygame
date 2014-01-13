@@ -1,32 +1,32 @@
 
+
+
+
 import pygame as pg
 import os
-import weakref
         
 class Entry:
     instances = []
-    def __init__(self, text='', width=100, height=10, fontsize=15, font=None, 
-        fg=(0,0,0), deselect=(255,255,255), select=(155,155,155), bg=(255,255,255), border_width=5, border=False):
-        
+    def __init__(self, text='', width=100, height=10, **kwargs):
         Entry.instances.append(self)
-        self.font = font
-        self.text_color = fg
-        self.label, self.label_rect = self.render_font(text, self.font, fontsize)
-        self.bg_color = deselect
-        self.background_color = bg
+        self.assign_kwargs(kwargs)
+        self.text = text
+        self.label, self.label_rect = self.render_font(self.text, self.font, self.fontsize)
         self.color = self.bg_color
-        self.hover_bg_color = select
-        self.border_width = border_width
-        self.border = border
+        
         self.image = pg.Surface([width,height]).convert()
         self.image.fill(self.bg_color)
-        self.background = pg.Surface([width-self.border_width,height-self.border_width]).convert()
-        self.background.fill(self.background_color)
-        self.background_rect = self.background.get_rect()
         self.rect = self.image.get_rect()
         self.label_rect.center = self.rect.center
-        self.background_rect.center = self.rect.center
         self.focus = False
+        
+    def assign_kwargs(self, kwargs):
+        self.hover_bg_color = kwargs['hover']
+        self.bg_color = kwargs['bg']
+        self.text_color = kwargs['fg']
+        self.font = kwargs['font']
+        #self.border = kwargs['border']
+        self.fontsize = kwargs['fontsize']
         
     def render_font(self, text, filename, size):
         if not filename:
@@ -38,8 +38,7 @@ class Entry:
         return (font, rect)
         
     def render(self, screen):
-        pg.draw.rect(screen, self.color, self.rect, self.border)
-        pg.draw.rect(screen, self.background_color, self.background_rect, False)
+        pg.draw.rect(screen, self.color, self.rect, False)
         screen.blit(self.label, self.label_rect)
         
     def mouse_collision(self):
@@ -49,20 +48,29 @@ class Entry:
             self.color = self.bg_color
             
     def update(self):
-        self.label_rect.center = self.rect.center
-        self.background_rect.center = self.rect.center
+        self.label_rect.left = self.rect.left
+        self.label_rect.centery = self.rect.centery
         self.mouse_collision()
-            
+        
     def get_event(self, event):
         if self.rect.collidepoint(pg.mouse.get_pos()):
             if event.type == pg.MOUSEBUTTONDOWN and event.button == 1:
-                for obj in Entry.instances[:]: #reset all other Entry focus to False
+                for obj in Entry.instances: 
                     obj.focus = False
                 self.focus = not self.focus
+        if event.type == pg.KEYDOWN:
+            if self.focus:
+                if event.unicode.isprintable():
+                    self.text += event.unicode
+                elif event.key == pg.K_BACKSPACE:
+                    self.text = self.text[:-1]
+                elif event.key == pg.K_DELETE:
+                    self.text = ''
+                self.label, self.label_rect = self.render_font(self.text, self.font, self.fontsize)
             
 
 if __name__ == "__main__":
-    
+        
     class Font:
         '''simulating tools'''
         path = 'resources/fonts'
@@ -70,6 +78,12 @@ if __name__ == "__main__":
         def load(filename, size):
             p = os.path.join(Font.path, filename+'.ttf')
             return pg.font.Font(os.path.abspath(p), size)
+
+    def callback():
+        print('running callback')
+        
+    def callback2():
+        print('running callback 2')
         
     class Control:
         def __init__(self):
@@ -79,31 +93,36 @@ if __name__ == "__main__":
             self.Clock = pg.time.Clock()
             self.done = False
             
-            self.e = Entry(text='default text 1', width=300, height=30, fontsize=20,
-                fg=(0,0,0), deselect=(255,255,255), select=(0,0,0))
+            self.button_settings = {
+                'hover'   : (255,255,255),
+                'font'    : 'impact',
+                'fg'      : (0,0,0),
+                'bg'      : (155,155,155),
+                'border'  : False,
+                'fontsize': 15
+            }
+            
+            self.e = Entry(text='default text', width=100, height=20, **self.button_settings)
             self.e.rect.center = (200,100)
-            self.e2 = Entry(text='default text 2', width=300, height=30, fontsize=20,
-                fg=(0,0,0), deselect=(255,255,255), select=(0,0,0))
+            self.e2 = Entry(text='default text', width=100, height=20, **self.button_settings)
             self.e2.rect.center = (200,150)
-            self.e3 = Entry(text='default text 3', width=300, height=30, fontsize=20,
-                fg=(0,0,0), deselect=(255,255,255), select=(0,0,0))
+            self.e3 = Entry(text='default text', width=100, height=20, **self.button_settings)
             self.e3.rect.center = (200,200)
-
-            self.entries = [self.e, self.e2, self.e3]
+            self.buttons = [self.e, self.e2, self.e3]
             
         def event_loop(self):
             keys = pg.key.get_pressed()
             for event in pg.event.get():
                 if event.type == pg.QUIT or keys[pg.K_ESCAPE]:
                     self.done = True
-                for b in self.entries:
+                for b in self.buttons:
                     b.get_event(event)
                         
         def run(self):
             while not self.done:
-                self.screen.fill((155,155,155))
+                self.screen.fill((255,255,255))
                 self.event_loop()
-                for b in self.entries:
+                for b in self.buttons:
                     b.update()
                     b.render(self.screen)
                 pg.display.update()
