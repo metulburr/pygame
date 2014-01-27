@@ -1,10 +1,6 @@
-
-
-
-
 import pygame as pg
 import os
-        
+       
 class Entry:
     instances = []
     def __init__(self, text='', width=100, height=10, **kwargs):
@@ -13,7 +9,7 @@ class Entry:
         self.text = text
         self.label, self.label_rect = self.render_font(self.text, self.font, self.fontsize)
         self.color = self.bg_color
-        
+       
         self.image = pg.Surface([width,height]).convert()
         self.border_image = pg.Surface([width,height]).convert()
         self.image.fill(self.bg_color)
@@ -23,7 +19,8 @@ class Entry:
         self.border_rect.width += self.border_width
         self.border_rect.height += self.border_width
         self.focus = False
-        
+        self.offsetX = 0
+       
     def assign_kwargs(self, kwargs):
         self.bg_color = kwargs['bg']
         self.text_color = kwargs['font_color']
@@ -31,7 +28,7 @@ class Entry:
         self.border_color_init = kwargs['border_color']
         self.border_width = kwargs['border_width']
         self.fontsize = kwargs['font_size']
-        
+       
     def render_font(self, text, filename, size):
         if not filename:
             f = pg.font.SysFont('Arial', size)
@@ -40,12 +37,12 @@ class Entry:
         font = f.render(text, 1, self.text_color)
         rect = font.get_rect()
         return (font, rect)
-        
+       
     def render(self, screen):
         pg.draw.rect(screen, self.border_color, self.border_rect, False)
         pg.draw.rect(screen, self.color, self.rect, False)
-        screen.blit(self.label, self.label_rect)
-            
+        screen.blit(self.label, self.label_rect, area=pg.Rect(self.offsetX,0, self.label_rect.width-self.offsetX, self.label_rect.height))
+           
     def update(self):
         self.border_rect.center = self.rect.center
         self.label_rect.left = self.rect.left
@@ -54,15 +51,14 @@ class Entry:
             self.border_color = self.border_color_init
         else:
             self.border_color = self.bg_color
-
+            
         if self.label_rect.width > self.rect.width:
             self.label_rect.right= self.rect.right
-            #self.label_rect.width = self.rect.width
-            #self.label_rect.clip(self.rect)
-            #self.label_rect.fit(self.rect)
-            
-        
-        
+            self.offsetX = self.rect.left
+            #self.label_rect.right= self.rect.right
+        else:
+            self.offsetX = 0
+       
     def get_event(self, event):
         if event.type == pg.KEYDOWN:
             if self.focus:
@@ -75,14 +71,14 @@ class Entry:
                 self.label, self.label_rect = self.render_font(self.text, self.font, self.fontsize)
         elif self.rect.collidepoint(pg.mouse.get_pos()):
             if event.type == pg.MOUSEBUTTONDOWN and event.button == 1:
-                for obj in Entry.instances: 
+                for obj in Entry.instances:
                     obj.focus = False
                 self.focus = not self.focus
 
-            
+           
 
 if __name__ == "__main__":
-        
+       
     class Font:
         '''simulating tools'''
         path = 'resources/fonts'
@@ -90,7 +86,7 @@ if __name__ == "__main__":
         def load(filename, size):
             p = os.path.join(Font.path, filename)
             return pg.font.Font(os.path.abspath(p), size)
-        
+       
     class Control:
         def __init__(self):
             pg.init()
@@ -98,16 +94,16 @@ if __name__ == "__main__":
             self.screen_rect = self.screen.get_rect()
             self.Clock = pg.time.Clock()
             self.done = False
-            
+           
             self.entry_settings = {
                 'font'         : 'impact.ttf',
-                'font_color'   : (200,200,0),
+                'font_color'   : (0,0,0),
                 'bg'           : (255,255,255),
                 'border_color' : (0,0,255),
                 'border_width' : 5,
                 'font_size'    : 15
             }
-            
+           
             self.e = Entry(text='default text', width=100, height=20, **self.entry_settings)
             self.e.rect.center = (200,100)
             self.e2 = Entry(text='default text', width=100, height=20, **self.entry_settings)
@@ -115,7 +111,7 @@ if __name__ == "__main__":
             self.e3 = Entry(text='default text', width=100, height=20, **self.entry_settings)
             self.e3.rect.center = (200,200)
             self.entries = [self.e, self.e2, self.e3]
-            
+           
         def event_loop(self):
             keys = pg.key.get_pressed()
             for event in pg.event.get():
@@ -123,17 +119,17 @@ if __name__ == "__main__":
                     self.done = True
                 for b in self.entries:
                     b.get_event(event)
-                        
+                       
         def run(self):
             while not self.done:
-                self.screen.fill((0,0,0))
+                self.screen.fill((155,155,155))
                 self.event_loop()
                 for b in self.entries:
                     b.update()
                     b.render(self.screen)
                 pg.display.update()
                 self.Clock.tick(60)
-                
+               
         def terminate(self):
             self.done = True
 
