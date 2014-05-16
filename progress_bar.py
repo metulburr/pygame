@@ -7,26 +7,26 @@ class ProgressBar:
         self.rect = pg.Rect(rect)
         self.maxwidth = self.rect.width
         self.timer = 0.0
-        self.time = 1.0
         self.process_kwargs(kwargs)
         self.complete = False
         if self.text:
             self.text = self.font.render(self.text,True,self.font_color)
     
     def process_kwargs(self,kwargs):
-        """Various optional customization you can change by passing kwargs."""
         settings = {
-            'color'      : (0,0,0),
-            'bg_color'   : (255,255,255),
-            'border_color' : (255,255,0),
-            'border_buff': 1,
-            'increment'  : 1,
-            'percent'   : 0,
+            'color'       : (0,0,0),
+            'bg_color'    : (255,255,255),
+            'border_color': (255,255,0),
+            'border_buff' : 1,
+            'increment'   : 10,
+            'time'        : 1.0,
+            'percent'     : 0,
+            'repetitive'  : False,
             
-            'text'       : None,
-            'font'       : pg.font.Font(None,20),
-            'font_color' : (0,0,0),
-            'text_always': False
+            'text'        : None,
+            'font'        : pg.font.Font(None,20),
+            'font_color'  : (0,0,0),
+            'text_always' : False
         }
         for kwarg in kwargs:
             if kwarg in settings:
@@ -39,7 +39,8 @@ class ProgressBar:
         if not self.complete:
             self.percent += self.increment
         else:
-            self.percent = 0
+            if self.repetitive:
+                self.percent = 0
         
     def update(self):
         self.current_time = pg.time.get_ticks()
@@ -77,12 +78,15 @@ class Control:
             'text'       : 'PBar',
             'color'      : (100,100,100),
             'bg_color'   : (255,255,255),
-            'increment'  : 25, 
+            'increment'  : .1, 
+            'time'       : 100, 
             'text_always': True,
         }
         self.bar = ProgressBar((10,10,100,25), **config)
         self.bar3 = ProgressBar((10,90,50,25), **config)
         self.bar2 = ProgressBar((10,50,200,25), **config)
+        self.bar4 = ProgressBar((10,130,500,25), **config)
+        self.bars = [self.bar, self.bar2, self.bar3, self.bar4]
         
     def events(self):
         for event in pg.event.get():
@@ -93,14 +97,12 @@ class Control:
                     self.bar2.progress()
                 
     def update(self):
-        self.bar.update()
-        self.bar2.update()
-        self.bar3.update()
+        for bar in self.bars:
+            bar.update()
         
     def render(self):
-        self.bar.render(self.screen)
-        self.bar2.render(self.screen)
-        self.bar3.render(self.screen)
+        for bar in self.bars:
+            bar.render(self.screen)
         
     def run(self):
         while not self.done:
