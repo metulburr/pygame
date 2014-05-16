@@ -32,7 +32,8 @@ class Button(object):
             'border_color'      : pg.Color('black'),
             'border_hover_color': pg.Color('yellow'),
             'disabled'          : False,
-            'disabled_color'     : pg.Color('grey')
+            'disabled_color'     : pg.Color('grey'),
+            'radius'            : 3,
         }
         for kwarg in kwargs:
             if kwarg in settings:
@@ -101,11 +102,40 @@ class Button(object):
                 border = self.border_hover_color
         else:
             color = self.disabled_color
-        surface.fill(border,self.rect)
-        surface.fill(color,self.rect.inflate(-4,-4))
+        
+        #if not self.rounded:
+        #    surface.fill(border,self.rect)
+        #    surface.fill(color,self.rect.inflate(-4,-4))
+        #else:
+        if self.radius:
+            rad = self.radius
+        else:
+            rad = 0
+        self.round_rect(surface, self.rect , border, rad, 1, color)
         if self.text:
             text_rect = text.get_rect(center=self.rect.center)
             surface.blit(text,text_rect)
+            
+            
+    def round_rect(self, surface, rect, color, rad=20, border=0, inside=(0,0,0,0)):
+        rect = pg.Rect(rect)
+        zeroed_rect = rect.copy()
+        zeroed_rect.topleft = 0,0
+        image = pg.Surface(rect.size).convert_alpha()
+        image.fill((0,0,0,0))
+        self._render_region(image, zeroed_rect, color, rad)
+        if border:
+            zeroed_rect.inflate_ip(-2*border, -2*border)
+            self._render_region(image, zeroed_rect, inside, rad)
+        surface.blit(image, rect)
+
+
+    def _render_region(self, image, rect, color, rad):
+        corners = rect.inflate(-2*rad, -2*rad)
+        for attribute in ("topleft", "topright", "bottomleft", "bottomright"):
+            pg.draw.circle(image, color, getattr(corners,attribute), rad)
+        image.fill(color, rect.inflate(-2*rad,0))
+        image.fill(color, rect.inflate(0,-2*rad))
 
 
 if __name__ == '__main__':
@@ -121,6 +151,7 @@ if __name__ == '__main__':
                 "hover_font_color"   : (205,195, 0),
                 'font_color'         : (255,255,255),
                 'border_color'       : (0,0,0),
+                'border_hover_color' : (100,100,100),
             }
             self.btn1 = Button((10,10,105,25),(0,0,100), 
                 self.test, text='Button 1', clicked_color=(255,255,255), 
@@ -149,6 +180,7 @@ if __name__ == '__main__':
             pass
             
         def render(self):
+            self.screen.fill((255,255,255))
             for button in self.buttons:
                 button.render(self.screen)
             
