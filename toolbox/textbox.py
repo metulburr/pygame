@@ -19,24 +19,26 @@ class TextBox(object):
         self.process_kwargs(kwargs)
 
     def process_kwargs(self,kwargs):
-        defaults = {"id" : None,
-                    "command" : None,
-                    "color" : pg.Color("white"),
-                    "font_color" : pg.Color("black"),
-                    "outline_color" : pg.Color("black"),
-                    "outline_width" : 2,
-                    "active_color" : pg.Color("blue"),
-                    "font" : pg.font.Font(None,self.rect.height+4),
-                    "clear_on_enter" : False,
-                    "inactive_on_enter" : True}
+        defaults = {
+            "id" : None,
+            "function" : None,
+            "color" : pg.Color("white"),
+            "font_color" : pg.Color("black"),
+            "border_color" : pg.Color("grey"),
+            "outline_width" : 2,
+            "active_color" : pg.Color("blue"),
+            "font" : pg.font.Font(None,self.rect.height+4),
+            "clear_on_enter" : False,
+            "inactive_on_enter" : False
+        }
         for kwarg in kwargs:
             if kwarg in defaults:
                 defaults[kwarg] = kwargs[kwarg]
             else:
-                raise KeyError("InputBox accepts no keyword {}.".format(kwarg))
+                raise KeyError("{} accepts no keyword {}.".format(self.__class__.__name__, kwarg))
         self.__dict__.update(defaults)
 
-    def get_event(self,event):
+    def check_event(self,event):
         if event.type == pg.KEYDOWN and self.active:
             if event.key in (pg.K_RETURN,pg.K_KP_ENTER):
                 self.execute()
@@ -49,8 +51,9 @@ class TextBox(object):
             self.active = self.rect.collidepoint(event.pos)
 
     def execute(self):
-        if self.command:
-            self.command(self.id,self.final)
+        if self.function:
+            self.function()
+            #self.command(self.id,self.final)
         self.active = not self.inactive_on_enter
         if self.clear_on_enter:
             self.buffer = []
@@ -72,10 +75,10 @@ class TextBox(object):
             self.blink = not self.blink
             self.blink_timer = pg.time.get_ticks()
 
-    def draw(self,surface):
-        outline_color = self.active_color if self.active else self.outline_color
+    def render(self,surface):
+        #outline_color = self.active_color if self.active else self.outline_color
         outline = self.rect.inflate(self.outline_width*2,self.outline_width*2)
-        surface.fill(outline_color,outline)
+        surface.fill(self.border_color,outline)
         surface.fill(self.color,self.rect)
         if self.rendered:
             surface.blit(self.rendered,self.render_rect,self.render_area)
@@ -83,3 +86,43 @@ class TextBox(object):
             curse = self.render_area.copy()
             curse.topleft = self.render_rect.topleft
             surface.fill(self.font_color,(curse.right+1,curse.y,2,curse.h))
+            
+            
+if __name__ == '__main__':
+    class Control:
+        def __init__(self):
+            pg.init()
+            self.screen = pg.display.set_mode((800,600))
+            self.done = False
+            self.clock = pg.time.Clock()
+            
+            config = {
+                'clear_on_enter' :True
+            }
+            self.textbox = TextBox((10,10,100,25), function=self.test, **config)
+            
+        def test(self):
+            print(self.textbox.final)
+            
+        def events(self):
+            for event in pg.event.get():
+                if event.type == pg.QUIT:
+                    self.done = True
+                self.textbox.check_event(event)
+                    
+        def update(self):
+            self.textbox.update()
+            
+        def render(self):
+            self.textbox.render(self.screen)
+            
+        def run(self):
+            while not self.done:
+                self.events()
+                self.update()
+                self.render()
+                pg.display.update()
+                self.clock.tick(60)
+                
+    app = Control()
+    app.run()

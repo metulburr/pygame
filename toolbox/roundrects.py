@@ -58,3 +58,37 @@ def _aa_render_region(image, rect, color, rad):
         gfxdraw.filled_circle(image, x, y, rad, color)
     image.fill(color, rect.inflate(-2*rad,0))
     image.fill(color, rect.inflate(0,-2*rad))
+    
+
+if __name__ == '__main__':
+    class Control:
+        def __init__(self):
+            pg.init()
+            self.screen = pg.display.set_mode((800,600))
+            self.done = False
+            self.clock = pg.time.Clock()
+            
+        def events(self):
+            for event in pg.event.get():
+                if event.type == pg.QUIT:
+                    self.done = True
+                    
+        def update(self):
+            pass
+            
+        def render(self):
+            x, y = self.screen.get_rect().center
+            w = 100
+            h = 25
+            round_rect(self.screen, (x, y,w,h) , (255,0,0), 5, 1, (50,0,0))
+            
+        def run(self):
+            while not self.done:
+                self.events()
+                self.update()
+                self.render()
+                pg.display.update()
+                self.clock.tick(60)
+                
+    app = Control()
+    app.run()
