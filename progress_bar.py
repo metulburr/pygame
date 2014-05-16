@@ -18,7 +18,8 @@ class ProgressBar:
         settings = {
             'color'      : (0,0,0),
             'bg_color'   : (255,255,255),
-            'bg_buff'    : 1,
+            'border_color' : (255,255,0),
+            'border_buff': 1,
             'increment'  : 1,
             'percent'   : 0,
             
@@ -37,8 +38,8 @@ class ProgressBar:
     def progress(self):
         if not self.complete:
             self.percent += self.increment
-        #else:
-        #    self.percent = 0
+        else:
+            self.percent = 0
         
     def update(self):
         self.current_time = pg.time.get_ticks()
@@ -53,9 +54,11 @@ class ProgressBar:
             self.complete = True
         else:
             self.complete = False
+        pg.draw.rect(screen, self.border_color, 
+            (self.rect.left-self.border_buff, self.rect.top-self.border_buff, 
+            self.rect.width+self.border_buff*2, self.rect.height+self.border_buff*2))
         pg.draw.rect(screen, self.bg_color, 
-            (self.rect.left-self.bg_buff, self.rect.top-self.bg_buff, 
-            self.rect.width+self.bg_buff*2, self.rect.height+self.bg_buff*2))
+            (self.rect.left, self.rect.top, self.rect.width, self.rect.height))
         pg.draw.rect(screen, self.color, 
             (self.rect.left, self.rect.top, width, self.rect.height))
         if self.text:
