@@ -64,14 +64,16 @@ class Button(object):
         if self.rect.collidepoint(event.pos):
             self.clicked = True
             if not self.call_on_release:
-                self.function()
+		if not self.disabled:
+                    self.function()
 
 
     def on_release(self,event):
         if self.clicked and self.call_on_release:
             #if user is still within button rect upon mouse release
             if self.rect.collidepoint(pg.mouse.get_pos()):
-                self.function()
+		if not self.disabled:
+                    self.function()
         self.clicked = False
 
     def check_hover(self):
@@ -136,6 +138,9 @@ class Button(object):
             pg.draw.circle(image, color, getattr(corners,attribute), rad)
         image.fill(color, rect.inflate(-2*rad,0))
         image.fill(color, rect.inflate(0,-2*rad))
+
+    def update(self):
+        pass
 
 
 if __name__ == '__main__':

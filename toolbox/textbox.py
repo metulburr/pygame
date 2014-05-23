@@ -8,15 +8,15 @@ ACCEPTED = string.ascii_letters+string.digits+string.punctuation+" "
 class TextBox(object):
     def __init__(self,rect,**kwargs):
         self.rect = pg.Rect(rect)
-        self.active = True
         self.buffer = []
-        self.final = None
+        self.text = None
         self.rendered = None
         self.render_rect = None
         self.render_area = None
         self.blink = True
         self.blink_timer = 0.0
         self.process_kwargs(kwargs)
+        self.buffer = list(str(self.default))
 
     def process_kwargs(self,kwargs):
         defaults = {
@@ -29,7 +29,9 @@ class TextBox(object):
             "active_color" : pg.Color("blue"),
             "font" : pg.font.Font(None,self.rect.height+4),
             "clear_on_enter" : False,
-            "inactive_on_enter" : False
+            "inactive_on_enter" : False,
+            "active" : True,
+            "default":'',
         }
         for kwarg in kwargs:
             if kwarg in defaults:
@@ -53,16 +55,16 @@ class TextBox(object):
     def execute(self):
         if self.function:
             self.function()
-            #self.command(self.id,self.final)
+            #self.command(self.id,self.text)
         self.active = not self.inactive_on_enter
         if self.clear_on_enter:
             self.buffer = []
 
     def update(self):
         new = "".join(self.buffer)
-        if new != self.final:
-            self.final = new
-            self.rendered = self.font.render(self.final, True, self.font_color)
+        if new != self.text:
+            self.text = new
+            self.rendered = self.font.render(self.text, True, self.font_color)
             self.render_rect = self.rendered.get_rect(x=self.rect.x+2,
                                                       centery=self.rect.centery)
             if self.render_rect.width > self.rect.width-6:
@@ -71,7 +73,7 @@ class TextBox(object):
                                            self.render_rect.height)
             else:
                 self.render_area = self.rendered.get_rect(topleft=(0,0))
-        if pg.time.get_ticks()-self.blink_timer > 200:
+        if pg.time.get_ticks()-self.blink_timer > 500:
             self.blink = not self.blink
             self.blink_timer = pg.time.get_ticks()
 
@@ -86,7 +88,6 @@ class TextBox(object):
             curse = self.render_area.copy()
             curse.topleft = self.render_rect.topleft
             surface.fill(self.font_color,(curse.right+1,curse.y,2,curse.h))
-            
             
 if __name__ == '__main__':
     class Control:
